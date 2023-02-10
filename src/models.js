@@ -33,24 +33,39 @@ const getModels = async () => {
     title: { type: DataTypes.STRING },
   });
 
+  Task.hasMany(Day);
+  Day.belongsTo(Task);
+
+
+  const TimeDiary = sequelize.define("TimeDiary", {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    title: { type: DataTypes.STRING },
+  });
+
+  TimeDiary.hasOne(Day);
+  Day.belongsTo(TimeDiary);
+
+  TimeDiary.hasOne(Task);
+  TimeDiary.belongsTo(Task);
+
   const User = sequelize.define("User", {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     email: { type: DataTypes.STRING },
     password: { type: DataTypes.STRING },
   });
 
-  Task.hasMany(Day);
-  Day.belongsTo(Task);
-
   User.hasOne(Day);
   Day.belongsTo(User);
-  
+
   User.hasOne(Task);
   Task.belongsTo(User);
 
-  await sequelize.sync();
+  User.hasOne(TimeDiary);
+  TimeDiary.belongsTo(TimeDiary);
 
-  return { Day, Task };
+  await sequelize.sync({ force: true });
+
+  return Day, Task, User, TimeDiary;
 };
 
 export default getModels;
