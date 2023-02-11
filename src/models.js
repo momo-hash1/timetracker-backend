@@ -1,71 +1,60 @@
 import { Sequelize, DataTypes } from "sequelize";
 
-const initSequelize = async () => {
-  const sequelize = new Sequelize({
-    dialect: "sqlite",
-    storage: "./timeline.db",
-  });
+const sequelize = new Sequelize({
+  dialect: "sqlite",
+  storage: "./timeline.db",
+});
 
-  try {
-    await sequelize.authenticate();
-    console.log("Connection has been established successfully.");
-  } catch (error) {
-    console.error("Unable to connect to the database:", error);
-  }
+try {
+  await sequelize.authenticate();
+  console.log("Connection has been established successfully.");
+} catch (error) {
+  console.error("Unable to connect to the database:", error);
+}
 
-  return sequelize;
-};
+const Day = sequelize.define("Day", {
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  year: { type: DataTypes.NUMBER },
+  month: { type: DataTypes.NUMBER },
+  day: { type: DataTypes.NUMBER },
+  minutes: { type: DataTypes.NUMBER },
+  difficulty: { type: DataTypes.NUMBER },
+});
 
-const getModels = async () => {
-  const sequelize = await initSequelize();
+const Task = sequelize.define("Task", {
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  title: { type: DataTypes.STRING },
+});
 
-  const Day = sequelize.define("Day", {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    year: { type: DataTypes.NUMBER },
-    month: { type: DataTypes.NUMBER },
-    day: { type: DataTypes.NUMBER },
-    minutes: { type: DataTypes.NUMBER },
-    difficulty: { type: DataTypes.NUMBER },
-  });
+Task.hasMany(Day);
+Day.belongsTo(Task);
 
-  const Task = sequelize.define("Task", {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    title: { type: DataTypes.STRING },
-  });
+const TimeDiary = sequelize.define("TimeDiary", {
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  title: { type: DataTypes.STRING },
+});
 
-  Task.hasMany(Day);
-  Day.belongsTo(Task);
+TimeDiary.hasMany(Day);
+Day.belongsTo(TimeDiary);
 
+TimeDiary.hasMany(Task);
+Task.belongsTo(TimeDiary);
 
-  const TimeDiary = sequelize.define("TimeDiary", {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    title: { type: DataTypes.STRING },
-  });
+const User = sequelize.define("User", {
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  email: { type: DataTypes.STRING },
+  password: { type: DataTypes.STRING },
+});
 
-  TimeDiary.hasOne(Day);
-  Day.belongsTo(TimeDiary);
+User.hasMany(Day);
+Day.belongsTo(User);
 
-  TimeDiary.hasOne(Task);
-  TimeDiary.belongsTo(Task);
+User.hasMany(Task);
+Task.belongsTo(User);
 
-  const User = sequelize.define("User", {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    email: { type: DataTypes.STRING },
-    password: { type: DataTypes.STRING },
-  });
+User.hasMany(TimeDiary);
+TimeDiary.belongsTo(User);
 
-  User.hasOne(Day);
-  Day.belongsTo(User);
+(async () => await sequelize.sync())();
 
-  User.hasOne(Task);
-  Task.belongsTo(User);
-
-  User.hasOne(TimeDiary);
-  TimeDiary.belongsTo(TimeDiary);
-
-  await sequelize.sync({ force: true });
-
-  return Day, Task, User, TimeDiary;
-};
-
-export default getModels;
+export {Day, Task, User, TimeDiary};
