@@ -1,5 +1,11 @@
 import Fastify from "fastify";
-import { Day, User } from "./models.js";
+import {
+  buildQueryDay,
+  buildContentQueryDay,
+  buildQueryTimeline,
+} from "./buildQuery.js";
+import { isHelpMessage } from "./helpMessages.js";
+import { Day } from "./models.js";
 import { dayAddSchema, messageSchema } from "./schema.js";
 
 const fastify = Fastify({
@@ -10,42 +16,41 @@ fastify.get("/", function (_request, reply) {
   reply.send({ hello: "world" });
 });
 
-const getDayQuery = (body, params) => {
-  return {
-    month: params.month,
-    year: params.year,
-    day: body.day,
-    minutes: params.minutes,
-    difficulty: body.difficulty,
-    TaskId: body.taskId,
-    TimeDiaryId: body.timediaryId,
-    UserId: body.userId,
-  };
-};
-
 fastify.post(
   "/timeline/:year/:month/:day",
   { schema: { ...dayAddSchema, ...messageSchema } },
   async (request, reply) => {
-    const { id } = request.body;
+    const query = await buildQueryDay({ ...request.params, ...request.query });
 
-    if (id !== null) {
-      await Day.update(getDayQuery(request.body, request.params), {
-        where: { id: id },
+    if (isHelpMessage(query)) {
+      reply.send(query);
+    }
+
+    const foundDay = await Day.findOne({ where: { ...query } });
+    if (foundDay !== null) {
+
+      await Day.update(buildContentQueryDay(request.body), {
+        where: { id: foundDay.id },
       });
+      reply.send({ type: "done", message: "day updated" });
       return;
     }
+
     try {
-      await Day.create(getDayQuery(request.body, request.params));
-      reply.send({ type: "ok", message: "day marked" });
+      await Day.create(buildContentQueryDay(request.body, query));
+
+      reply.send({ type: "done", message: "day marked" });
     } catch (error) {
       console.log(error);
+
       reply.send({ type: "error", message: "error occur" });
     }
   }
 );
 
-fastify.get("/timeline/:year/:month", (request, reply) => {});
+fastify.get("/timeline/:year/:month", (request, reply) => {
+  const query = buildQueryTimeline(request.params);
+});
 
 fastify.get("/years/available", (request, reply) => {});
 
