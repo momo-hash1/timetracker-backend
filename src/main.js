@@ -7,8 +7,8 @@ import {
 } from "./buildQuery.js";
 import { LIMIT_DAYS } from "./constants.js";
 import { isHelpMessage } from "./helpMessages.js";
-import { Day, Year } from "./models.js";
-import { dayAddSchema, messageSchema } from "./schema.js";
+import { Day, Task, Year } from "./models.js";
+import { dayAddSchema, getDaysSchema, messageSchema } from "./schema.js";
 
 const fastify = Fastify({
   logger: true,
@@ -18,29 +18,33 @@ fastify.get("/", function (_request, reply) {
   reply.send({ hello: "world" });
 });
 
-fastify.get("/timeline/:year/:month", async (request, reply) => {
-  const query = await buildQueryTimeline({
-    ...request.params,
-    ...request.query,
-  });
+fastify.get(
+  "/timeline/:year/:month",
+  { schema: { ...getDaysSchema} },
+  async (request, reply) => {
+    const query = await buildQueryTimeline({
+      ...request.params,
+      ...request.query,
+    });
 
-  if (isHelpMessage(query)) {
-    reply.send(query);
-    return;
+    if (isHelpMessage(query)) {
+      reply.send(query);
+      return;
+    }
+
+    reply.send(
+      await Day.findAll({
+        limit: LIMIT_DAYS,
+        offset: request.query.offset,
+        where: { ...query },
+      })
+    );
   }
-
-  reply.send(
-    await Day.findAll({
-      limit: LIMIT_DAYS,
-      offset: request.query.offset,
-      where: { ...query },
-    })
-  );
-});
+);
 
 fastify.post(
   "/timeline/:year/:month/:day",
-  { schema: { ...dayAddSchema, ...messageSchema } },
+  { schema: { ...dayAddSchema } },
   async (request, reply) => {
     const query = await buildQueryDay({ ...request.params, ...request.query });
 
@@ -79,7 +83,14 @@ fastify.get("/years/available", async (request, reply) => {
   reply.send(await Year.findAll({ where: { ...userAccessPick } }));
 });
 
-fastify.get("/tasks/", (request, reply) => {});
+fastify.get("/tasks/", async (request, reply) => {
+  const accessPick = timediaryAndUserAccess(request.query);
+  if (isHelpMessage(accessPick)) {
+    reply.send(accessPick);
+    return;
+  }
+  reply.send(await Task.findAll());
+});
 fastify.post("/tasks/add", (request, reply) => {});
 fastify.post("/tasks/:id", (request, reply) => {});
 fastify.get("/tasks/:id", (request, reply) => {});

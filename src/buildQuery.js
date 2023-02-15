@@ -35,6 +35,7 @@ const buildQueryTimeline = async (pick) => {
   if (isHelpMessage(dayQuery)) return dayQuery;
 
   delete dayQuery.day;
+
   return dayQuery;
 };
 

@@ -8,18 +8,43 @@ const dayAddSchema = {
       taskId: { type: "number" },
     },
   },
-};
-
-const messageSchema = {
-  response: {
-    200: {
-      type: "object",
-      properties: {
-        type: { enum: ["error", "done"] },
-        message: { type: "string" },
-      },
+  querystring: {
+    type: "object",
+    required: ["userToken", "timediaryId"],
+    properties: {
+      userToken: { type: "string" },
+      timediaryId: { type: "number" },
+    },
+  },
+  params: {
+    type: "object",
+    required: ["month", "year", "day"],
+    properties: {
+      month: { type: "number", minimum: 0 },
+      year: { type: "number", minimum: 0 },
+      day: { type: "number", minimum: 0, maximum: 31 },
     },
   },
 };
 
-export { dayAddSchema, messageSchema };
+const getDaysSchema = {
+  params: {
+    type: "object",
+    required: ["month", "year"],
+    properties: {
+      month: { type: "number", minimum: 0 },
+      year: { type: "number", minimum: 0 },
+    },
+  },
+  querystring: {
+    type: "object",
+    required: ["userToken", "timediaryId"],
+    properties: {
+      userToken: { type: "string" },
+      timediaryId: { type: "number" },
+      offset: { type: "number", minimum: 0 },
+    },
+  },
+};
+
+export { dayAddSchema, getDaysSchema };
