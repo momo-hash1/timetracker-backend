@@ -4,6 +4,7 @@ import {
   buildContentQueryDay,
   buildQueryTimeline,
 } from "./buildQuery.js";
+import { LIMIT_DAYS } from "./constants.js";
 import { isHelpMessage } from "./helpMessages.js";
 import { Day } from "./models.js";
 import { dayAddSchema, messageSchema } from "./schema.js";
@@ -14,6 +15,18 @@ const fastify = Fastify({
 
 fastify.get("/", function (_request, reply) {
   reply.send({ hello: "world" });
+});
+
+fastify.get("/timeline/:year/:month", async (request, reply) => {
+  const query = await buildQueryTimeline({
+    ...request.params,
+    ...request.query,
+  });
+  return await Day.findAll({
+    limit: LIMIT_DAYS,
+    offset: request.query.offset,
+    where: { ...query },
+  });
 });
 
 fastify.post(
@@ -28,7 +41,6 @@ fastify.post(
 
     const foundDay = await Day.findOne({ where: { ...query } });
     if (foundDay !== null) {
-
       await Day.update(buildContentQueryDay(request.body), {
         where: { id: foundDay.id },
       });
@@ -47,10 +59,6 @@ fastify.post(
     }
   }
 );
-
-fastify.get("/timeline/:year/:month", (request, reply) => {
-  const query = buildQueryTimeline(request.params);
-});
 
 fastify.get("/years/available", (request, reply) => {});
 

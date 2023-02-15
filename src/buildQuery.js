@@ -16,8 +16,8 @@ const buildQueryDay = async (pick) => {
   };
 };
 
-const buildQueryTimeline = (pick) => {
-  const dayQuery =  buildQueryDay(pick)
+const buildQueryTimeline = async (pick) => {
+  const dayQuery = await buildQueryDay(pick)
   delete dayQuery.day;
   return dayQuery
 }
