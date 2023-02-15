@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import { timediaryAndUserAccess, userAccess } from "./auth.js";
 import {
   buildQueryDay,
   buildContentQueryDay,
@@ -6,7 +7,7 @@ import {
 } from "./buildQuery.js";
 import { LIMIT_DAYS } from "./constants.js";
 import { isHelpMessage } from "./helpMessages.js";
-import { Day } from "./models.js";
+import { Day, Year } from "./models.js";
 import { dayAddSchema, messageSchema } from "./schema.js";
 
 const fastify = Fastify({
@@ -22,11 +23,19 @@ fastify.get("/timeline/:year/:month", async (request, reply) => {
     ...request.params,
     ...request.query,
   });
-  return await Day.findAll({
-    limit: LIMIT_DAYS,
-    offset: request.query.offset,
-    where: { ...query },
-  });
+
+  if (isHelpMessage(query)) {
+    reply.send(query);
+    return;
+  }
+
+  reply.send(
+    await Day.findAll({
+      limit: LIMIT_DAYS,
+      offset: request.query.offset,
+      where: { ...query },
+    })
+  );
 });
 
 fastify.post(
@@ -37,6 +46,7 @@ fastify.post(
 
     if (isHelpMessage(query)) {
       reply.send(query);
+      return;
     }
 
     const foundDay = await Day.findOne({ where: { ...query } });
@@ -60,7 +70,14 @@ fastify.post(
   }
 );
 
-fastify.get("/years/available", (request, reply) => {});
+fastify.get("/years/available", async (request, reply) => {
+  const userAccessPick = timediaryAndUserAccess(request.query);
+  if (isHelpMessage(userAccessPick)) {
+    reply.send(userAccessPick);
+    return;
+  }
+  reply.send(await Year.findAll({ where: { ...userAccessPick } }));
+});
 
 fastify.get("/tasks/", (request, reply) => {});
 fastify.post("/tasks/add", (request, reply) => {});

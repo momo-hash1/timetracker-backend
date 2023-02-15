@@ -8,7 +8,7 @@ const getErrorMsg = (msg) => {
 };
 
 const isHelpMessage = (obj) => {
-  if (obj.type !== undefined && Object.keys().includes(obj.type)) return true;
+  return obj.type !== undefined;
 };
 
 export { getErrorMsg, isHelpMessage };

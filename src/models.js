@@ -12,6 +12,11 @@ try {
   console.error("Unable to connect to the database:", error);
 }
 
+const Year = sequelize.define("Year", {
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  year: { type: DataTypes.INTEGER },
+});
+
 const Day = sequelize.define("Day", {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   year: { type: DataTypes.NUMBER },
@@ -40,6 +45,9 @@ Day.belongsTo(TimeDiary);
 TimeDiary.hasMany(Task);
 Task.belongsTo(TimeDiary);
 
+TimeDiary.hasMany(Year);
+Year.belongsTo(TimeDiary);
+
 const User = sequelize.define("User", {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   email: { type: DataTypes.STRING },
@@ -55,6 +63,9 @@ Task.belongsTo(User);
 User.hasMany(TimeDiary);
 TimeDiary.belongsTo(User);
 
+User.hasMany(Year);
+Year.belongsTo(User);
+
 (async () => await sequelize.sync())();
 
-export {Day, Task, User, TimeDiary};
+export { Day, Task, User, TimeDiary, Year };
