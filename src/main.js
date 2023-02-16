@@ -7,15 +7,16 @@ import {
   buildQueryTimeline,
 } from "./buildQuery.js";
 import { LIMIT_DAYS } from "./constants.js";
-import { getErrorMsg, getInfoMsg, isHelpMessage } from "./helpMessages.js";
-import { Day, Task, tryExecute, Year } from "./models.js";
 import {
-  addTaskSchema,
-  dayAddSchema,
-  getDaysSchema,
-  getTaskSchema,
-  getYearSchema,
-} from "./schema.js";
+  addEntry,
+  deleteEntry,
+  getEntries,
+  searchEntry,
+  updateEntry,
+} from "./entry.js";
+import { getErrorMsg, getInfoMsg, isHelpMessage } from "./helpMessages.js";
+import { Day, Task, TimeDiary, tryExecute, Year } from "./models.js";
+import { dayAddSchema, getDaysSchema, entrySchema } from "./schema.js";
 
 const fastify = Fastify({
   logger: true,
@@ -78,57 +79,39 @@ fastify.post(
 
 fastify.get(
   "/years/available",
-  { schema: getYearSchema },
+  { schema: entrySchema },
   async (request, reply) => {
-    const userAccessPick = timediaryAndUserAccess(request.query);
-    if (isHelpMessage(userAccessPick)) {
-      reply.send(userAccessPick);
-      return;
-    }
-    reply.send(await Year.findAll({ where: { ...userAccessPick } }));
+    await getEntries(
+      Year,
+      request.query.offset,
+      timediaryAndUserAccess(request.query),
+      reply
+    );
   }
 );
 
-fastify.get("/tasks/available", { schema: getTaskSchema }, async (request, reply) => {
-  const accessPick = timediaryAndUserAccess(request.query);
-  if (isHelpMessage(accessPick)) {
-    reply.send(accessPick);
-    return;
+fastify.get(
+  "/tasks/available",
+  { schema: entrySchema },
+  async (request, reply) => {
+    await getEntries(
+      Task,
+      request.query.offset,
+      timediaryAndUserAccess(request.query),
+      reply
+    );
   }
-  reply.send(
-    await Task.findAll({
-      where: { ...accessPick },
-      offset: request.query.offset,
-    })
-  );
+);
+
+fastify.post("/tasks/add", { schema: entrySchema }, async (request, reply) => {
+  await addEntry(Task, request.query, { title: request.body.title }, reply);
 });
-
-fastify.post(
-  "/tasks/add",
-  { schema: addTaskSchema },
-  async (request, reply) => {
-    const accessPick = await timediaryAndUserAccess(request.query);
-    if (isHelpMessage(accessPick)) {
-      reply.send(accessPick);
-      return;
-    }
-
-    tryExecute(reply.send, async () => {
-      await Task.create({
-        title: request.body.title,
-        UserId: accessPick.userId,
-        TimeDiaryId: accessPick.timediaryId,
-      });
-    });
-    reply.send(getInfoMsg("task added"));
-  }
-);
 
 fastify.post(
   "/tasks/:id",
   {
     schema: {
-      ...addTaskSchema,
+      ...entrySchema,
       params: {
         type: "object",
         properties: {
@@ -138,55 +121,50 @@ fastify.post(
     },
   },
   async (request, reply) => {
-    const accessPick = await timediaryAndUserAccess(request.query);
-    if (isHelpMessage(accessPick)) {
-      reply.send(accessPick);
-      return;
-    }
-
-    tryExecute(reply.send, async () => {
-      await Task.update(
-        {
-          title: request.body.title,
-        },
-        { where: { id: request.params.id } }
-      );
-    });
-    reply.send(getInfoMsg("task updated"));
+    await updateEntry(
+      Task,
+      request.query,
+      { title: request.body.title },
+      request.params.id,
+      reply
+    );
   }
 );
-fastify.get("/tasks/title/:search", async (request, reply) => {
-  const accessPick = await timediaryAndUserAccess(request.query);
-  if (isHelpMessage(accessPick)) {
-    reply.send(accessPick);
-    return;
-  }
-
-  reply.send(
-    await Task.findAll({
-      where: { title: { [Op.like]: `%${request.params.search}%` } },
-    })
-  );
+fastify.get("/tasks/search/:search", async (request, reply) => {
+  await searchEntry(Task, request.query, "title", request.params.search, reply);
 });
 fastify.delete("/tasks/:id", async (request, reply) => {
-  const accessPick = userAccess(request.query);
-  if (isHelpMessage(accessPick)) {
-    reply.send(accessPick);
-    return;
-  }
-
-  tryExecute(reply.send, async () => {
-    await Task.destroy({ where: { id: request.params.id } });
-  });
-  reply.send(getInfoMsg("task deleted"));
+  await deleteEntry(Task, request.query, request.params.id, reply);
 });
 
-fastify.get("/timediaries/available", (request, reply) => {});
-fastify.post("/timediaries/add", (request, reply) => {});
-fastify.post("/timediaries/:id", (request, reply) => {});
-fastify.delete("/timediaries/:id", (request, reply) => {});
+fastify.get("/timediaries/available", async (request, reply) => {
+  await getEntries(
+    TimeDiary,
+    request.query.offset,
+    userAccess(request.query),
+    reply
+  );
+});
+fastify.post("/timediaries/add", async (request, reply) => {
+  await addEntry(
+    TimeDiary,
+    request.query,
+    { title: request.body.title },
+    reply
+  );
+});
+fastify.delete("/timediaries/:id", async (request, reply) => {
+  await deleteEntry(TimeDiary, request.query, request.params.id, reply);
+});
 
-fastify.get("/user/:id", (request, reply) => {});
+fastify.get("/user/:id", async (request, reply) => {
+  const accessPick = userAccess(request.query)
+  if(isHelpMessage(accessPick)){
+    reply.send(accessPick)
+    return
+  }
+
+});
 fastify.post("/user/:id", (request, reply) => {});
 fastify.post("/user/add", (request, reply) => {});
 fastify.delete("/user/:id", (request, reply) => {});

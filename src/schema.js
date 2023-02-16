@@ -47,18 +47,7 @@ const getDaysSchema = {
   },
 };
 
-const getYearSchema = {
-  querystring: {
-    type: "object",
-    required: ["userToken", "timediaryId"],
-    properties: {
-      userToken: { type: "string" },
-      timediaryId: { type: "number" },
-    },
-  },
-};
-
-const getTaskSchema = {
+const entrySchema = {
   querystring: {
     type: "object",
     required: ["userToken", "timediaryId"],
@@ -70,28 +59,8 @@ const getTaskSchema = {
   },
 };
 
-const addTaskSchema = {
-  querystring: {
-    type: "object",
-    required: ["userToken", "timediaryId"],
-    properties: {
-      userToken: { type: "string" },
-      timediaryId: { type: "number" },
-    },
-  },
-  body: {
-    type: "object",
-    required: ["title"],
-    properties: {
-      title: { type: "string" },
-    },
-  },
-};
-
 export {
   dayAddSchema,
   getDaysSchema,
-  getYearSchema,
-  getTaskSchema,
-  addTaskSchema,
+  entrySchema,
 };
