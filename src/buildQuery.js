@@ -29,6 +29,15 @@ const buildQueryDay = async (pick) => {
   };
 };
 
+const buildContentQueryDay = (content, pick = {}) => {
+  return {
+    ...pick,
+    TaskId: content.taskId,
+    minutes: content.minutes,
+    difficulty: content.difficulty,
+  };
+};
+
 const buildQueryTimeline = async (pick) => {
   const dayQuery = await buildQueryDay(pick);
 
@@ -39,13 +48,6 @@ const buildQueryTimeline = async (pick) => {
   return dayQuery;
 };
 
-const buildContentQueryDay = (content, pick = {}) => {
-  return {
-    ...pick,
-    TaskId: content.taskId,
-    minutes: content.minutes,
-    difficulty: content.difficulty,
-  };
-};
+
 
 export { buildQueryDay, buildContentQueryDay, buildQueryTimeline };

@@ -1,4 +1,5 @@
 import { Sequelize, DataTypes } from "sequelize";
+import { getErrorMsg } from "./helpMessages.js";
 
 const sequelize = new Sequelize({
   dialect: "sqlite",
@@ -66,6 +67,15 @@ TimeDiary.belongsTo(User);
 User.hasMany(Year);
 Year.belongsTo(User);
 
+const tryExecute = async (send, callback) => {
+  try {
+    await callback();
+  } catch (error) {
+    console.log(error);
+    send(getErrorMsg("Error occur"));
+  }
+};
+
 (async () => await sequelize.sync())();
 
-export { Day, Task, User, TimeDiary, Year };
+export { Day, Task, User, TimeDiary, Year, tryExecute };

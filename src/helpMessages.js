@@ -7,8 +7,12 @@ const getErrorMsg = (msg) => {
   return { type: types.error, message: msg };
 };
 
+const getInfoMsg = (msg) => {
+  return { type: types.done, message: msg }
+}
+
 const isHelpMessage = (obj) => {
   return obj.type !== undefined;
 };
 
-export { getErrorMsg, isHelpMessage };
+export { getErrorMsg, isHelpMessage, getInfoMsg };
