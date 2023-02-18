@@ -1,6 +1,6 @@
-import { timediaryAndUserAccess } from "./auth.js";
-import { isHelpMessage } from "./helpMessages.js";
-import { Year } from "./models.js";
+const { timediaryAndUserAccess } = require("./auth.js");
+const { isHelpMessage } = require("./helpMessages.js");
+const { Year } = require("./models");
 
 const createYear = async (year, timediaryId) => {
   if (
@@ -48,6 +48,4 @@ const buildQueryTimeline = async (pick) => {
   return dayQuery;
 };
 
-
-
-export { buildQueryDay, buildContentQueryDay, buildQueryTimeline };
+module.exports = { buildQueryDay, buildContentQueryDay, buildQueryTimeline };

@@ -1,7 +1,8 @@
-import { timediaryAndUserAccess, userAccess } from "./auth.js";
-import { isHelpMessage, getInfoMsg, getErrorMsg } from "./helpMessages.js";
-import { tryExecute } from "./models.js";
-import { Op } from "sequelize";
+const { Op } = require("sequelize");
+
+const { timediaryAndUserAccess, userAccess } = require("./auth.js");
+const { isHelpMessage, getInfoMsg, getErrorMsg } = require("./helpMessages.js");
+const { tryExecute } = require("./models.js");
 
 const addEntry = async (model, query, column, reply) => {
   const accessPick = await timediaryAndUserAccess(query);
@@ -80,4 +81,10 @@ const entryExists = async (model, entryId) => {
   return (await model.findOne({ where: { id: entryId } })) !== null;
 };
 
-export { addEntry, updateEntry, searchEntry, deleteEntry, getEntries };
+module.exports = {
+  addEntry,
+  updateEntry,
+  searchEntry,
+  deleteEntry,
+  getEntries,
+};

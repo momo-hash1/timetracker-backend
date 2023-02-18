@@ -1,20 +1,22 @@
-import Fastify from "fastify";
-import { encodeObj, timediaryAndUserAccess, userAccess } from "./auth.js";
-import {
+const Fastify = require("fastify");
+const jwt = require("jsonwebtoken");
+
+const {
   buildQueryDay,
   buildContentQueryDay,
   buildQueryTimeline,
-} from "./buildQuery.js";
-import { LIMIT_DAYS, SECRETKEY } from "./constants.js";
-import {
+} = require("./buildQuery.js");
+const {
   addEntry,
   deleteEntry,
   getEntries,
   searchEntry,
   updateEntry,
-} from "./entry.js";
-import { getErrorMsg, getInfoMsg, isHelpMessage } from "./helpMessages.js";
-import { Day, Task, TimeDiary, tryExecute, User, Year } from "./models.js";
+} = require("./entry.js");
+const { timediaryAndUserAccess, userAccess } = require("./auth");
+const { LIMIT_DAYS, SECRETKEY } = require("./constants");
+const { getErrorMsg, getInfoMsg, isHelpMessage } = require("./helpMessages");
+const { Day, Task, TimeDiary, tryExecute, User, Year } = require("./models");
 
 const fastify = Fastify({
   logger: true,
@@ -200,7 +202,7 @@ fastify.post("/user/auth", async (request, reply) => {
     reply.send("wrong password");
     return;
   }
-  const token = encodeObj({ userId: foundUser.id });
+  const token = jwt.sign({ userId: foundUser.id }, SECRETKEY);
   reply.send(token);
 });
 

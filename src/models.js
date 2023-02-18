@@ -1,17 +1,20 @@
-import { Sequelize, DataTypes } from "sequelize";
-import { getErrorMsg } from "./helpMessages.js";
+const { Sequelize, DataTypes } = require("sequelize");
+
+const { getErrorMsg } = require("./helpMessages");
 
 const sequelize = new Sequelize({
   dialect: "sqlite",
   storage: "./timeline.db",
 });
 
-try {
-  await sequelize.authenticate();
-  console.log("Connection has been established successfully.");
-} catch (error) {
-  console.error("Unable to connect to the database:", error);
-}
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log("Connection has been established successfully.");
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+  }
+})();
 
 const Year = sequelize.define("Year", {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -78,4 +81,4 @@ const tryExecute = async (send, callback) => {
 
 (async () => await sequelize.sync())();
 
-export { Day, Task, User, TimeDiary, Year, tryExecute };
+module.exports = { Day, Task, User, TimeDiary, Year, tryExecute };

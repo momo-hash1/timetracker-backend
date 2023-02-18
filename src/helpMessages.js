@@ -15,4 +15,4 @@ const isHelpMessage = (obj) => {
   return obj.type !== undefined;
 };
 
-export { getErrorMsg, isHelpMessage, getInfoMsg };
+module.exports = { getErrorMsg, isHelpMessage, getInfoMsg };

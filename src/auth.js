@@ -1,11 +1,12 @@
-import { TimeDiary, User } from "./models.js";
-import { getErrorMsg, isHelpMessage } from "./helpMessages.js";
-import crypto from "crypto";
-import { key, iv } from "./constants.js";
+const jwt = require("jsonwebtoken");
+
+const { TimeDiary, User } = require("./models")
+const { getErrorMsg, isHelpMessage } = require("./helpMessages")
+const { SECRETKEY } = require("./constants");
 
 const auth = async (jwtToken) => {
   try {
-    const decodedJwt = decodeString(jwtToken);
+    const decodedJwt = jwt.verify(jwtToken, SECRETKEY);
     const foundUser = await User.findOne({
       where: { id: decodedJwt.userId },
     });
@@ -44,20 +45,5 @@ const timediaryAndUserAccess = async (pick) => {
   return userAccessPick;
 };
 
-const encodeObj = (obj) => {
-  const cipher = crypto.createCipheriv("aes-192-cbc", key, iv);
 
-  return (
-    cipher.update(JSON.stringify(obj), "utf-8", "hex") + cipher.final("hex")
-  );
-};
-
-const decodeString = (string) => {
-  string = string.trim();
-  const decipher = crypto.createDecipheriv("aes-192-cbc", key, iv);
-  return JSON.parse(
-    decipher.update(string, "hex", "utf-8") + decipher.final("utf-8")
-  );
-};
-
-export { auth, userAccess, timediaryAndUserAccess, decodeString, encodeObj };
+module.exports =  { auth, userAccess, timediaryAndUserAccess };
