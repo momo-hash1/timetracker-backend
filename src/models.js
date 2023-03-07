@@ -72,7 +72,7 @@ Year.belongsTo(User);
 
 const tryExecute = async (send, callback) => {
   try {
-    await callback();
+    return await callback();
   } catch (error) {
     console.log(error);
     send(getErrorMsg("Error occur"));

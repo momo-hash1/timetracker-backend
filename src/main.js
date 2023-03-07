@@ -1,6 +1,6 @@
 const Fastify = require("fastify");
 const jwt = require("jsonwebtoken");
-
+const cors = require("@fastify/cors");
 const {
   buildQueryDay,
   buildContentQueryDay,
@@ -22,6 +22,11 @@ const fastify = Fastify({
   logger: true,
 });
 
+(async () =>
+  await fastify.register(cors, {
+    // put your options here
+  }))();
+
 fastify.get("/", function (_request, reply) {
   reply.send({ hello: "world" });
 });
@@ -40,12 +45,10 @@ fastify.get("/timeline/:year/:month", async (request, reply) => {
     reply.send(query);
     return;
   }
-
   reply.send(
     await Day.findAll({
-      limit: LIMIT_DAYS,
-      offset: request.query.offset,
       where: { ...query },
+      include: [Task],
     })
   );
 });
@@ -57,9 +60,6 @@ fastify.post("/timeline/:year/:month/:day", async (request, reply) => {
     reply.send(query);
     return;
   }
-
-  console.log(query);
-
   const foundDay = await Day.findOne({ where: { ...query } });
   if (foundDay !== null) {
     await Day.update(buildContentQueryDay(request.body), {
@@ -79,7 +79,7 @@ fastify.get("/years/available", async (request, reply) => {
   await getEntries(
     Year,
     request.query.offset,
-    timediaryAndUserAccess(request.query),
+    await timediaryAndUserAccess(request.query),
     reply
   );
 });
@@ -88,19 +88,29 @@ fastify.get("/tasks/available", async (request, reply) => {
   await getEntries(
     Task,
     request.query.offset,
-    timediaryAndUserAccess(request.query),
+    await timediaryAndUserAccess(request.query),
     reply
   );
 });
 
 fastify.post("/tasks/add", async (request, reply) => {
-  await addEntry(Task, request.query, { title: request.body.title }, reply);
+  const entry = await addEntry(
+    Task,
+    request.query,
+    { title: request.body.title },
+    reply
+  );
+  reply.send({
+    ...getInfoMsg(`Task added`),
+    entry: { title: request.body.title, id: entry.id },
+  });
 });
 
 fastify.post(
   "/tasks/:id",
 
   async (request, reply) => {
+    console.log(request.body);
     await updateEntry(
       Task,
       request.query,
@@ -110,11 +120,13 @@ fastify.post(
     );
   }
 );
+
 fastify.get("/tasks/search/:search", async (request, reply) => {
   await searchEntry(Task, request.query, "title", request.params.search, reply);
 });
 fastify.delete("/tasks/:id", async (request, reply) => {
   await deleteEntry(Task, request.query, request.params.id, reply);
+  reply.send({ ...getInfoMsg("Task deleted"), id: request.params.id });
 });
 
 fastify.get("/timediaries/available", async (request, reply) => {
@@ -126,15 +138,28 @@ fastify.get("/timediaries/available", async (request, reply) => {
   );
 });
 fastify.post("/timediaries/add", async (request, reply) => {
-  await addEntry(
+  const entry = await addEntry(
     TimeDiary,
     request.query,
     { title: request.body.title },
     reply
   );
+  reply.send({ ...getInfoMsg(`Timediary added`), entry: entry });
 });
 fastify.delete("/timediaries/:id", async (request, reply) => {
   await deleteEntry(TimeDiary, request.query, request.params.id, reply);
+  reply.send({ ...getInfoMsg("Timediary deleted"), id: request.params.id });
+});
+
+fastify.post("/timediaries/:id", async (request, reply) => {
+  console.log(request.body.title);
+  await updateEntry(
+    TimeDiary,
+    request.query,
+    { title: request.body.title },
+    request.params.id,
+    reply
+  );
 });
 
 fastify.get("/user/:id", async (request, reply) => {
@@ -169,7 +194,10 @@ fastify.post("/user/add", async (request, reply) => {
       email: request.body.email,
       password: request.body.password,
     });
-    reply.send(encodeObj({ userId: createdUser.id }));
+    reply.send({
+      ...getInfoMsg("you register"),
+      userToken: jwt.sign({ userId: createdUser.id }, SECRETKEY),
+    });
   } catch (error) {
     console.log(error);
     reply.send(getErrorMsg("error occur"));
@@ -195,15 +223,15 @@ fastify.post("/user/auth", async (request, reply) => {
     where: { email: request.body.email },
   });
   if (foundUser === null) {
-    reply.send("User unknown");
+    reply.send(getErrorMsg("User unknown"));
     return;
   }
   if (foundUser.password !== request.body.password) {
-    reply.send("wrong password");
+    reply.send(getErrorMsg("wrong password"));
     return;
   }
   const token = jwt.sign({ userId: foundUser.id }, SECRETKEY);
-  reply.send(token);
+  reply.send({ userToken: token });
 });
 
 fastify.listen({ port: 3000 }, function (err, address) {

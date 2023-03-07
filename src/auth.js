@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 
-const { TimeDiary, User } = require("./models")
-const { getErrorMsg, isHelpMessage } = require("./helpMessages")
+const { TimeDiary, User } = require("./models");
+const { getErrorMsg, isHelpMessage } = require("./helpMessages");
 const { SECRETKEY } = require("./constants");
 
 const auth = async (jwtToken) => {
@@ -14,7 +14,7 @@ const auth = async (jwtToken) => {
     return decodedJwt.userId;
   } catch (error) {
     console.log(error);
-    return getErrorMsg("decryption error");
+    return getErrorMsg("Please relogin");
   }
 };
 
@@ -28,7 +28,9 @@ const userAccess = async (pick) => {
 
   if (verifiedUserId === null) return getErrorMsg("User unknown");
 
-  return { ...pick, userId: verifiedUserId };
+  delete pick.userToken;
+
+  return { userId: verifiedUserId };
 };
 
 const timediaryAndUserAccess = async (pick) => {
@@ -42,8 +44,7 @@ const timediaryAndUserAccess = async (pick) => {
     return getErrorMsg("Timediary unknown");
   }
 
-  return userAccessPick;
+  return { timediaryId: pick.timediaryId, ...userAccessPick };
 };
 
-
-module.exports =  { auth, userAccess, timediaryAndUserAccess };
+module.exports = { auth, userAccess, timediaryAndUserAccess };

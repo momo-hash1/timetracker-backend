@@ -1,14 +1,14 @@
 const types = {
   error: "error",
-  done: "done",
+  done: "info",
 };
 
 const getErrorMsg = (msg) => {
-  return { type: types.error, message: msg };
+  return { type: types.error, title: msg };
 };
 
 const getInfoMsg = (msg) => {
-  return { type: types.done, message: msg }
+  return { type: types.done, title: msg }
 }
 
 const isHelpMessage = (obj) => {
